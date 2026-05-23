@@ -27,6 +27,11 @@ def test_parse_empty_string_returns_none():
     assert parse_log_line("") is None
 
 
+def test_parse_whitespace_only_returns_none():
+    """Whitespace-only input should be treated the same as an empty string."""
+    assert parse_log_line("   ") is None
+
+
 # ---------------------------------------------------------------------------
 # LogTailer.process_line
 # ---------------------------------------------------------------------------
@@ -73,6 +78,14 @@ def test_anomaly_callback_called_on_spike():
         tailer.process_line(json.dumps({"event": "login"}))
 
     on_anomaly.assert_called_once_with(fake_event)
+
+
+def test_no_anomaly_callback_not_called_without_spike():
+    """on_anomaly should not be invoked when detector.observe returns None."""
+    tailer, on_anomaly = _make_tailer()
+    with patch.object(tailer.detector, "observe", return_value=None):
+        tailer.process_line(json.dumps({"event": "login"}))
+    on_anomaly.assert_not_called()
 
 
 def test_custom_key_field():
